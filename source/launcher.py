@@ -95,7 +95,7 @@ def processTarget(target):
         processTarget('makeFolders')
         copy('./cli/package.cli.json', './package.json')
         run('npm install')
-        run('cd node_modules')
+        run('cd "node_modules"')
         run('ls')
         run('cd ../')
         run('npm run compile-css')
