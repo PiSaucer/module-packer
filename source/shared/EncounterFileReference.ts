@@ -2,7 +2,6 @@ import * as FileSystem from 'fs-extra'
 import * as Path from 'path'
 import * as Unzipper from 'unzipper'
 import * as XML2JS from 'xml2js'
-import * as Logger from 'winston'
 import { Encounter } from './Module Entities/Encounter'
 
 /** 
@@ -55,13 +54,11 @@ export class EncounterFileReference {
     let encounterExtractTempPath = Path.join(moduleBuildPath, pathBaseName + 'TempEncounter')
     let fullEncounterPath = Path.join(projectPath, this.path)
 
-    Logger.info(`Processing encounter file "${this.path}"`)
-    
     // Create temporary unzip path for encounter file
     FileSystem.ensureDirSync(encounterExtractTempPath)
 
     // Unzip the encounter file
-    await FileSystem.createReadStream(fullEncounterPath).pipe(Unzipper.Extract({path: encounterExtractTempPath})).promise()
+    await FileSystem.createReadStream(fullEncounterPath).pipe(Unzipper.Extract({ path: encounterExtractTempPath })).promise()
 
     let encounterModuleXmlFile = Path.join(encounterExtractTempPath, 'module.xml')
     let encounterCampaignXmlFile = Path.join(encounterExtractTempPath, 'campaign.xml')
@@ -117,11 +114,11 @@ export class EncounterFileReference {
     }
 
     encounter.encounterData = encounterObject
-    
+
     // Cleanup the temp directory
     FileSystem.rmdirSync(encounterExtractTempPath, { recursive: true })
 
     return encounter
-  } 
+  }
 
 }

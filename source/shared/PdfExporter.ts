@@ -2,7 +2,6 @@ import * as Cheerio from 'cheerio'
 import * as FileSystem from 'fs-extra'
 import * as Path from 'path'
 import * as Puppeteer from 'puppeteer-core'
-import * as Logger from 'winston'
 import { pathToFileURL } from 'url'
 import { Module, ModuleMode } from './Module Entities/Module'
 import { ModuleEntity } from './Module Entities/ModuleEntity'
@@ -28,7 +27,6 @@ export class PdfExporter {
     let pageLocation = Path.join(moduleOutputPath, 'printPage.html')
     let saveLocation = Path.join(projectDirectory, `${module.moduleProjectInfo.slug}.pdf`)
 
-    Logger.info(`Creating HTML for PDF output at ${pageLocation}...`)
     let html = `<!DOCTYPE html><html lang="en"><head>`
     html += `<meta charset="UTF-8">`
     html += `<link rel="stylesheet" href="${globalStyleLocation}">`
@@ -53,9 +51,9 @@ export class PdfExporter {
     html += PdfExporter.getChildPageContent(module.children)
     html = PdfExporter.formatTableOfContents(html)
     let printLinkMode = module.moduleProjectInfo.printLinkMode
-    if(printLinkMode !== undefined && printLinkMode !== PrintLinkMode.None) {
+    if (printLinkMode !== undefined && printLinkMode !== PrintLinkMode.None) {
       html = PdfExporter.postProcessLinks(html, printLinkMode)
-    }    
+    }
     html = PdfExporter.alternateFooters(html)
     FileSystem.writeFileSync(pageLocation, html)
 
@@ -70,13 +68,11 @@ export class PdfExporter {
       timeout: 0
     })
 
-    Logger.info(`Creating PDF file.`)
     const pdf = await page.pdf({
       format: 'letter',
       printBackground: true,
     })
 
-    Logger.info(`Saving PDF file at ${saveLocation}...`)
     FileSystem.writeFileSync(saveLocation, pdf)
     await browser.close()
     return saveLocation
@@ -93,7 +89,6 @@ export class PdfExporter {
         return
       }
 
-      Logger.info("Downloading & installing Chromium PDF rendering engine...")
       if (downloadProgressChanged) {
         downloadProgressChanged(0)
       }
@@ -108,7 +103,6 @@ export class PdfExporter {
         }
       })
       let localRevisions = await browserFetcher.localRevisions()
-      Logger.info('Chromium downloaded to ' + revisionInfo.folderPath)
 
       // Remove any older versions
       const cleanupOldVersions = await localRevisions.map(async (revision) => {
@@ -121,7 +115,6 @@ export class PdfExporter {
         return Promise.all(cleanupOldVersions)
       }
     } catch (error: any) {
-      Logger.error((error as Error).message)
       throw Error(`PDF engine installation failed: ${(error as Error).message}`)
     }
   }
@@ -136,13 +129,13 @@ export class PdfExporter {
 
     $('.print-page').each((i, element) => {
       $(element).find('.footer-background').each((i, element) => {
-        if(isEvenPage) {
+        if (isEvenPage) {
           $(element).attr('style', 'transform: scaleX(-1);')
         }
       })
-      
+
       $(element).find('.footer-page-number').each((i, element) => {
-        if(isEvenPage) {
+        if (isEvenPage) {
           $(element).attr('style', 'right: unset; left: 2px;')
         }
       })
@@ -161,55 +154,55 @@ export class PdfExporter {
 
     $('a').each((i, element) => {
       let link = $(element).attr('href')
-      if(link === undefined) {
+      if (link === undefined) {
         return
       }
 
       let ignoreLinkUpdate = $(element).hasClass('no-link-update')
-      if(ignoreLinkUpdate === true) {
+      if (ignoreLinkUpdate === true) {
         return
       }
 
       let newLink = link
-      if(link.startsWith('/roll/')) {
+      if (link.startsWith('/roll/')) {
         let linkText = $(element).text()
         $(element).replaceWith(`<strong>${linkText}</strong>`)
       }
-      if(link.startsWith('/monster/')) {
-        if(printLinkMode === PrintLinkMode.DNDBeyondEntries) {
+      if (link.startsWith('/monster/')) {
+        if (printLinkMode === PrintLinkMode.DNDBeyondEntries) {
           newLink = link.replace('/monster/', 'https://www.dndbeyond.com/monsters/')
         }
-        if(printLinkMode === PrintLinkMode.DNDBeyondSearch) {
+        if (printLinkMode === PrintLinkMode.DNDBeyondSearch) {
           newLink = link.replace('/monster/', 'https://www.dndbeyond.com/search?q=')
-        }       
+        }
         $(element).attr('href', newLink)
         $(element).addClass('monster')
       }
-      if(link.startsWith('/spell/')) {
-        if(printLinkMode === PrintLinkMode.DNDBeyondEntries) {
+      if (link.startsWith('/spell/')) {
+        if (printLinkMode === PrintLinkMode.DNDBeyondEntries) {
           newLink = link.replace('/spell/', 'https://www.dndbeyond.com/spells/')
         }
-        if(printLinkMode === PrintLinkMode.DNDBeyondSearch) {
+        if (printLinkMode === PrintLinkMode.DNDBeyondSearch) {
           newLink = link.replace('/spell/', 'https://www.dndbeyond.com/search?q=')
         }
         $(element).attr('href', newLink)
         $(element).addClass('spell')
       }
-      if(link.startsWith('/item/')) {
+      if (link.startsWith('/item/')) {
         let isMagicItem = $(element).hasClass('magic-item')
         let isEquipment = $(element).hasClass('equipment')
-        if(printLinkMode === PrintLinkMode.DNDBeyondEntries) {
-          if(isMagicItem) {
+        if (printLinkMode === PrintLinkMode.DNDBeyondEntries) {
+          if (isMagicItem) {
             newLink = link.replace('/item/', 'https://www.dndbeyond.com/magic-items/')
           }
-          else if(isEquipment) {
+          else if (isEquipment) {
             newLink = link.replace('/item/', 'https://www.dndbeyond.com/equipment/')
           }
           else {
             newLink = link.replace('/item/', 'https://www.dndbeyond.com/search?q=')
           }
         }
-        if(printLinkMode === PrintLinkMode.DNDBeyondSearch) {
+        if (printLinkMode === PrintLinkMode.DNDBeyondSearch) {
           newLink = link.replace('/item/', 'https://www.dndbeyond.com/search?q=')
         }
         $(element).attr('href', newLink)
@@ -253,18 +246,17 @@ export class PdfExporter {
     $('ul.toc').each((i, element) => {
       $(element).find('li').each((i, listElement) => {
         $(listElement).find('a').each((i, linkElement) => {
-          let linkHref = linkElement.attribs['href']          
-          if(!linkHref) {
+          let linkHref = linkElement.attribs['href']
+          if (!linkHref) {
             return
           }
 
           let pageNumber = anchorPageDictionary[linkHref]
           let linkContent = linkElement.children[0]?.data
-          if(!pageNumber || !linkContent) {
-            Logger.warn(`Could not find the link content or page number for "${linkHref}" when generating a table of contents.`)
+          if (!pageNumber || !linkContent) {
             return
           }
-          
+
           $(linkElement).replaceWith(`<span class="toc-title"><a href="${linkHref}">${linkContent}</a></span><span class="toc-page-number"><a href="${linkHref}">${pageNumber}</a></span>`)
         })
       })

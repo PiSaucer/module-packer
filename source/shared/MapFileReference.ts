@@ -2,7 +2,6 @@ import * as FileSystem from 'fs-extra'
 import * as Path from 'path'
 import * as Unzipper from 'unzipper'
 import * as XML2JS from 'xml2js'
-import * as Logger from 'winston'
 import { Map } from './Module Entities/Map'
 
 /** 
@@ -55,13 +54,11 @@ export class MapFileReference {
     let mapExtractTempPath = Path.join(moduleBuildPath, pathBaseName + 'TempMap')
     let fullMapPath = Path.join(projectPath, this.path)
 
-    Logger.info(`Processing map file "${this.path}"`)
-    
     // Create temporary unzip path for map file
     FileSystem.ensureDirSync(mapExtractTempPath)
 
     // Unzip the map file
-    await FileSystem.createReadStream(fullMapPath).pipe(Unzipper.Extract({path: mapExtractTempPath})).promise()
+    await FileSystem.createReadStream(fullMapPath).pipe(Unzipper.Extract({ path: mapExtractTempPath })).promise()
 
     let mapModuleXmlFile = Path.join(mapExtractTempPath, 'module.xml')
     let mapCampagnXmlFile = Path.join(mapExtractTempPath, 'campaign.xml')
@@ -117,11 +114,11 @@ export class MapFileReference {
     }
 
     map.mapData = mapObject
-    
+
     // Cleanup the temp directory
     FileSystem.rmdirSync(mapExtractTempPath, { recursive: true })
 
     return map
-  } 
+  }
 
 }

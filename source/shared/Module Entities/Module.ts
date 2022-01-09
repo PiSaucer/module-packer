@@ -3,7 +3,6 @@ import * as Cheerio from 'cheerio'
 import * as FileSystem from 'fs-extra'
 import * as GrayMatter from 'gray-matter'
 import * as Path from 'path'
-import * as Logger from 'winston'
 import Slugify from 'slugify'
 import { v4 as UUIDV4, v5 as UUIDV5 } from 'uuid'
 import * as XML2JS from 'xml2js'
@@ -41,7 +40,7 @@ export class Module {
   /**
    * Initializes an instance of `Module`
    */
-  private constructor() {}
+  private constructor() { }
 
   // ---------------------------------------------------------------
   // Public Properties
@@ -285,7 +284,7 @@ export class Module {
         if (parentSlug == module.slug) {
           entity.parent = undefined
         }
-        
+
         entity.parent = allEntities.filter((entity) => {
           return entity.slug === parentSlug
         })[0]
@@ -352,11 +351,11 @@ export class Module {
       var deletedEmptyGroup = true
       // Delete empty groups in a while loop until empty groups are no longer deleted
       // This covers the case of multiple levels of empty groups being nested
-      while (deletedEmptyGroup) { 
+      while (deletedEmptyGroup) {
         deletedEmptyGroup = false
         let groupsToRemove: Group[] = []
         module.groups.forEach((group) => {
-          if(group.children.length == 0) {
+          if (group.children.length == 0) {
             groupsToRemove.push(group)
             deletedEmptyGroup = true
           }
@@ -394,7 +393,7 @@ export class Module {
     // issues a warning if the links can't be resolved
     if (Module.scanForBrokenLinks) {
       module.checkForBrokenLinks()
-    }    
+    }
 
     // Export module.xml file
     if (mode == ModuleMode.ModuleExport) {
@@ -533,7 +532,7 @@ export class Module {
         if (linkDestination !== undefined) {
           moduleLinks[page.slug].push(linkDestination)
         }
-      })      
+      })
     })
 
     // Check for unresolvable links
@@ -555,7 +554,6 @@ export class Module {
 
           let linkResolves = entitySlugList[link]
           if (!linkResolves) {
-            Logger.warn(`Possible broken link: "${link}" in page "${pageSlug}"`)
           }
         })
       })
@@ -577,7 +575,6 @@ export class Module {
     archive.on('warning', function (error) {
       let errorMessage = (error as Error).message
       if (error.code === 'ENOENT') {
-        Logger.warn(errorMessage)
       } else {
         throw error
       }
@@ -597,7 +594,6 @@ export class Module {
    * @param outputPath The path where the XML files will be created
    */
   private exportXML = (outputPath: string) => {
-    Logger.info(`Exporting module to XML: ${outputPath}`)
 
     let modulePath = Path.join(outputPath, 'module.xml')
     let compendiumPath = Path.join(outputPath, 'compendium.xml')
@@ -847,7 +843,6 @@ export class Module {
     const scanOnly = this.exportMode === ModuleMode.ScanModule
 
     if (!scanOnly) {
-      Logger.info(`Processing directory: ${directoryPath}`)
     }
 
     let moduleProjectDirectory = this.moduleProjectInfo.moduleProjectDirectory
@@ -933,8 +928,8 @@ export class Module {
         (newGroup.includeIn === IncludeMode.Print && this.exportMode === ModuleMode.PrintToPDF) ||
         (newGroup.includeIn === IncludeMode.Module && this.exportMode === ModuleMode.ModuleExport))
         && !isFilesOnly
-        
-      if (includeGroup) {        
+
+      if (includeGroup) {
         newGroup.parent = parentGroup
         if (parentGroup) {
           parentGroup.children.push(newGroup)
@@ -949,7 +944,7 @@ export class Module {
         // If not simply scanning - still copy the directory
         // so the resources are part of the module (unless the group is explicitly
         // marked not to)
-        if(!scanOnly && !skipCopy) {
+        if (!scanOnly && !skipCopy) {
           let copyPath = Path.join(moduleBuildClonePath, subdirectoryName)
           FileSystem.copySync(subdirectoryPath, copyPath)
         }
@@ -975,7 +970,7 @@ export class Module {
     const scanOnly = this.exportMode === ModuleMode.ScanModule
     const forPrint = this.exportMode === ModuleMode.PrintToPDF
     const forModuleExport = this.exportMode === ModuleMode.ModuleExport
-    
+
     let markdownRenderer = new MarkdownRenderer(forPrint, this)
     let markdown = markdownRenderer.getRenderer()
 
@@ -1014,7 +1009,6 @@ export class Module {
     }
 
     if (!scanOnly) {
-      Logger.info(`Processing file: ${filePath}`)
     }
 
     // Read the markdown file contents
@@ -1147,13 +1141,11 @@ export class Module {
         let headerText = $(element).text()
 
         if (!scanOnly) {
-          Logger.info(`Parsing page from header "${headerText}"`)
         }
 
         // Create Page from current HTML
         let page = new Page(headerText, this.moduleProjectInfo.id, filePath)
         if (!scanOnly) {
-          Logger.info(`Slug for page "${page.name}": ${page.slug}`)
         }
 
         page.content += $.html(element)
@@ -1173,7 +1165,7 @@ export class Module {
             // Special case cover images - they will be moved
             // to the beginning of the page later
             if ($(element).find('.before-next-page-header').length > 0) {
-              cover = element              
+              cover = element
             } else {
               page.content += $.html(element)
             }
@@ -1204,7 +1196,6 @@ export class Module {
             page.sort = nestedSortOrder
             nestedSortOrder += 1
           } else {
-            Logger.info(`Page for header "${parentHeader}" was not found. This is a bug in the module packer.`)
           }
         }
 
@@ -1223,19 +1214,18 @@ export class Module {
         }
 
         // If page doesn't explicitly set IncludeIn, inherit it
-        if(includeIn !== undefined) {
+        if (includeIn !== undefined) {
           page.includeIn = ModuleEntity.getIncludeModeFromString(includeIn)
         } else if (page.parent !== undefined) {
           page.includeIn = page.parent.includeIn
         } else {
           page.includeIn = IncludeMode.All
-        }        
-        if(page.includeIn === IncludeMode.Files)
-        {
+        }
+        if (page.includeIn === IncludeMode.Files) {
           throw Error(`The 'include-in' value for groups cannot be 'files'`)
         }
 
-        this.postProcessPage(page, filePath, printMultiColumn, coverImagePath)  
+        this.postProcessPage(page, filePath, printMultiColumn, coverImagePath)
 
         // Finally, add the page to the module
         pages.push(page)
@@ -1249,7 +1239,6 @@ export class Module {
     if (!pagebreakContentFound) {
       let page = new Page(pageName, this.moduleProjectInfo.id, filePath, slug)
       if (!scanOnly) {
-        Logger.info(`Slug for page "${page.name}": ${page.slug}`)
       }
 
       page.printCoverOnly = printCoverOnly
@@ -1266,15 +1255,14 @@ export class Module {
       page.content = html
 
       // If page doesn't explicitly set IncludeIn, inherit it
-      if(includeIn !== undefined) {
+      if (includeIn !== undefined) {
         page.includeIn = ModuleEntity.getIncludeModeFromString(includeIn)
       } else if (page.parent !== undefined) {
         page.includeIn = page.parent.includeIn
       } else {
         page.includeIn = IncludeMode.All
-      }        
-      if(page.includeIn === IncludeMode.Files)
-      {
+      }
+      if (page.includeIn === IncludeMode.Files) {
         throw Error(`The 'include-in' value for groups cannot be 'files'`)
       }
 
@@ -1359,11 +1347,9 @@ export class Module {
       // the client will navigate to one of the IDs
       // (which one is not specified, but probably the first)
       $(element).prepend(`<a id="${headerSlug}"></a>`)
-      Logger.info(`Anchor created: ${headerSlug}`)
 
       let anchorID = `${slug}-${headerSlug}`
       $(element).prepend(`<a id="${anchorID}"></a>`)
-      Logger.info(`Anchor created: ${anchorID}`)
     })
 
     return $('body').html() ?? pageContent
